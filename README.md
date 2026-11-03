@@ -13,17 +13,13 @@ dengan 3 nyawa, sampai menyelesaikan wave 10. Dibangun dari demo resmi Godot
 ## Cara main
 
 - Hindari semua musuh. Setiap tersentuh musuh, nyawa berkurang 1 dan karakter
-  kebal sebentar. Nyawa habis = game over.
+  kebal sebentar.
+- Saat nyawa terakhir habis, muncul kuis hidup-lagi (sekali per wave). Jawaban benar =
+  hidup lagi dengan 1 nyawa, salah = game over.
 - Ambil item hati yang sesekali muncul untuk menambah nyawa (maksimal 3).
 - Skor: +1 per detik bertahan, ditambah bonus 10 × nomor wave setiap wave selesai.
 - Selesaikan wave 10 untuk menang. Di akhir setiap wave, pilih lanjut, simpan
-  lalu keluar, atau keluar.
-
-- Saat nyawa terakhir habis, muncul kuis hidup-lagi (sekali per wave). Jawaban benar =
-  hidup lagi dengan 1 nyawa, salah = game over.
-
-> Pilihan di akhir wave belum diimplementasikan (fitur #6); untuk sementara wave
-> otomatis lanjut.
+  lalu keluar, atau keluar. Simpanan bisa dilanjutkan dari layar judul.
 
 ## Kontrol
 
@@ -48,7 +44,7 @@ Di laptop, kontrol sentuh bisa dicoba dengan klik dan seret mouse.
 | 3 | Nyawa (3) + item nyawa gratis | A | Selesai | Ikon hati di kiri atas; kuis hidup-lagi (#9) muncul saat nyawa terakhir habis |
 | 4 | Jenis musuh berbeda (min. 3 dari 5) | B | Selesai | Kelima jenis sudah ada: Walker, Swimmer, Chaser, Dasher, Splitter |
 | 5 | Wave dan sub-wave, 10 wave | B | Selesai | Termasuk komposisi musuh per sub-wave, batas musuh di layar, debug F2 |
-| 6 | Simpan progress di akhir wave | A + C | Belum | `WaveManager.start_waves(n)` sudah siap untuk "Lanjutkan"; layar akhir wave dan `SaveManager.save_progress()` belum ada. Wave saat ini otomatis lanjut |
+| 6 | Simpan progress di akhir wave | A + C | Selesai | Layar akhir wave (Lanjut / Simpan & Keluar / Keluar); layar judul menampilkan "Lanjutkan" + "Main Baru" (dengan konfirmasi) bila ada simpanan |
 | 7 | Menembak | A | Ditunda, kalau masih ada waktu | Sprite musuh terkena tembakan (`art/enemies/*_hit.png`) sudah tersedia |
 | 8 | Latar luar angkasa prosedural & tema visual | – | Selesai | |
 | 9 | Kuis hidup-lagi (1x per wave) & dialog modal | – | Selesai | |
@@ -59,8 +55,6 @@ Perbarui kolom Status setiap fitur masuk ke branch `master`.
 
 ### Sisa pekerjaan
 
-- [ ] **#6 Simpan progress** (A + C). Layar akhir wave (Lanjut / Simpan & Keluar / Keluar),
-      tombol "Lanjutkan" dan "Main Baru" di layar judul, simpan dan hapus progress di `save_manager.gd`.
 - [ ] **HUD sub-wave** (C). Tampilkan "Wave n/10 · s/3" dan pesan "Sub-wave 2" / "Sub-wave 3".
 - [ ] **Balancing** (B). Mainkan sampai wave 10 di HP (gunakan F2 untuk melompati wave), lalu atur
       `max_mobs_*`, `base_interval`, `speed_*`, dan bobot di `WAVES` di `wave_manager.gd`.
@@ -167,7 +161,7 @@ dodge-em-all/
 ├── credits.gd               # kartu credit dan logika tampilan/skip credit
 ├── quiz_bank.gd             # bank soal kuis hidup-lagi
 ├── quiz_panel.gd            # dialog modal kuis hidup-lagi
-├── save_manager.gd          # autoload: simpan/muat high score
+├── save_manager.gd          # autoload: simpan/muat high score dan progress (user://save.cfg)
 ├── space_background.*       # latar luar angkasa prosedural dan event acak
 ├── space_theme.gd           # warna dan gaya UI tema luar angkasa
 ├── wave_audio.gd            # pengatur audio adaptif wave (pitch naik, WAVE_MUSIC, sfx)

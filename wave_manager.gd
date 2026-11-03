@@ -8,6 +8,7 @@ signal wave_started(wave)
 signal subwave_started(wave, subwave)
 signal subwave_ended(wave, subwave)
 signal wave_cleared(wave)
+signal wave_break(wave)  # jeda akhir wave selesai; menunggu continue_next_wave() dari Main
 signal game_won
 
 # Konstanta aturan permainan
@@ -63,7 +64,8 @@ var max_wave = MAX_WAVES
 var subwave = 1
 var is_running = false
 
-# Internal state: "idle", "wave_prepare", "subwave_active", "subwave_rest", "wave_cleared", "game_won"
+# Internal state: "idle", "wave_prepare", "subwave_active", "subwave_rest", "wave_cleared",
+# "waiting_next" (layar akhir wave tampil, menunggu pilihan pemain), "game_won"
 var _state = "idle"
 var _timer = 0.0
 var _mix = {}  # komposisi sub-wave yang sedang berjalan
@@ -95,6 +97,8 @@ func _process(delta):
 	if not is_running:
 		return
 
+	if _state == "waiting_next":
+		return
 	_timer -= delta
 	if _timer <= 0:
 		_on_timer_finished()
@@ -118,13 +122,22 @@ func _on_timer_finished():
 			_start_subwave(subwave)
 		"wave_cleared":
 			if wave < MAX_WAVES:
-				wave += 1
-				subwave = 1
-				_prepare_wave()
+				# Wave berikutnya baru dimulai setelah pemain memilih "Lanjut" di layar akhir wave.
+				_state = "waiting_next"
+				wave_break.emit(wave)
 			else:
 				_state = "game_won"
 				is_running = false
 				game_won.emit()
+
+
+# Dipanggil Main saat pemain memilih "Lanjut" di layar akhir wave.
+func continue_next_wave():
+	if _state != "waiting_next":
+		return
+	wave += 1
+	subwave = 1
+	_prepare_wave()
 
 
 func _finish_wave():
@@ -141,7 +154,7 @@ func _finish_wave():
 func _unhandled_input(event):
 	if not OS.is_debug_build() or not is_running:
 		return
-	if _state == "wave_cleared" or _state == "game_won":
+	if _state in ["wave_cleared", "waiting_next", "game_won"]:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F2:
 		get_viewport().set_input_as_handled()

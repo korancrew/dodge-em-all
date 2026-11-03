@@ -17,6 +17,11 @@ const LIFE_SPAWN_MAX = 20.0
 const REVIVE_LIVES = 1  # jumlah nyawa setelah lolos kuis hidup-lagi
 var life_timer: Timer
 
+# Akhir wave: bonus skor 10 × nomor wave, lalu layar pilihan Lanjut / Simpan & Keluar / Keluar.
+const WAVE_BONUS_PER_WAVE = 10
+var _last_bonus = 0
+var _start_wave = 1  # wave pertama ronde ini (1, atau wave dari simpanan saat "Lanjutkan")
+
 
 func _ready():
 	# Layar penuh: ukuran area permainan mengikuti layar perangkat (stretch aspect "expand"),
@@ -27,11 +32,15 @@ func _ready():
 	$WaveManager.subwave_started.connect(_on_subwave_started)
 	$WaveManager.subwave_ended.connect(_on_subwave_ended)
 	$WaveManager.wave_cleared.connect(_on_wave_cleared)
+	$WaveManager.wave_break.connect(_on_wave_break)
 	$WaveManager.game_won.connect(_on_game_won)
 	$HUD.revive_passed.connect(_on_revive_passed)
 	$HUD.revive_failed.connect(_on_revive_failed)
 	$HUD.game_resumed.connect(_on_hud_game_resumed)
 	$HUD.quit_to_menu.connect(_on_hud_quit_to_menu)
+	$HUD.continue_game.connect(continue_game)
+	$HUD.next_wave.connect(_on_next_wave)
+	$HUD.save_and_quit.connect(_on_save_and_quit)
 
 	# Inisialisasi pengatur audio adaptif wave
 	_wave_audio = WaveAudio.new()
@@ -114,6 +123,7 @@ func game_over():
 	_stop_life_pickups()
 	$HUD.update_revive_indicator(false)
 	_wave_audio.stop()
+	SaveManager.clear_progress()  # simpanan dihapus supaya kekalahan tidak bisa "dibatalkan"
 	var new_record = score > SaveManager.highest_score
 	if new_record:
 		SaveManager.save_high_score(score)
@@ -123,21 +133,32 @@ func game_over():
 	$DeathSound.play()
 
 
-func new_game():
+# Game baru (Start / Main Baru) memakai nilai bawaan.
+# "Lanjutkan" dari simpanan memanggil fungsi ini dengan wave, skor, dan nyawa yang tersimpan.
+func new_game(start_wave = 1, start_score = 0, start_lives = -1):
 	_is_processing_hit = false
+	_start_wave = start_wave
 	$SpaceBackground.start_events()
-	$SpaceBackground.set_wave_theme(1)
+	$SpaceBackground.set_wave_theme(start_wave)
 	$WaveManager.stop()
 	get_tree().call_group(&"mobs", &"queue_free")
 	_stop_life_pickups()
-	score = 0
-	$Player.start($StartPosition.position)
+	score = start_score
+	$Player.start($StartPosition.position, start_lives)
 	_restart_life_timer()
 	$StartTimer.start()
 	$HUD.update_score(score)
 	$HUD.show_message("Get Ready")
 	_wave_audio.stop()
 	$Music.play()
+
+
+func continue_game():
+	var progress = SaveManager.load_progress()
+	if progress.is_empty():
+		new_game()
+		return
+	new_game(progress.next_wave, progress.score, progress.lives)
 
 
 func _on_wave_started(wave):
@@ -164,11 +185,29 @@ func _on_subwave_ended(_wave, _subwave):
 func _on_wave_cleared(wave):
 	$MobTimer.stop()
 	get_tree().call_group(&"mobs", &"queue_free")
-	var bonus = 10 * wave
-	score += bonus
+	_last_bonus = WAVE_BONUS_PER_WAVE * wave
+	score += _last_bonus
 	$HUD.update_score(score)
-	$HUD.show_message("Wave %d Selesai!\n+%d" % [wave, bonus])
+	$HUD.show_message("Wave %d Selesai!\n+%d" % [wave, _last_bonus])
 	_wave_audio.on_wave_cleared(wave)
+
+
+# Jeda akhir wave selesai (bukan wave terakhir): tampilkan layar pilihan.
+# HUD mem-pause game selama layar ini tampil.
+func _on_wave_break(wave):
+	get_tree().call_group(&"mobs", &"queue_free")  # wave berikutnya mulai dari layar bersih
+	get_tree().call_group(&"life_pickup", &"queue_free")
+	$HUD.show_wave_end(wave, $WaveManager.max_wave, score, _last_bonus, $Player.lives)
+
+
+func _on_next_wave():
+	$WaveManager.continue_next_wave()
+
+
+# Simpan wave berikutnya, skor, dan nyawa, lalu kembali ke layar judul.
+func _on_save_and_quit():
+	SaveManager.save_progress($WaveManager.wave + 1, score, $Player.lives)
+	_on_hud_quit_to_menu()
 
 
 func _on_game_won():
@@ -181,6 +220,7 @@ func _on_game_won():
 	$HUD.update_revive_indicator(false)
 	_wave_audio.on_game_won()
 	get_tree().call_group(&"mobs", &"queue_free")
+	SaveManager.clear_progress()
 	var new_record = score > SaveManager.highest_score
 	if new_record:
 		SaveManager.save_high_score(score)
@@ -223,7 +263,7 @@ func _on_ScoreTimer_timeout():
 
 
 func _on_StartTimer_timeout():
-	$WaveManager.start_waves()
+	$WaveManager.start_waves(_start_wave)
 
 
 func _on_hud_game_resumed():
