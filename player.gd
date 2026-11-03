@@ -2,8 +2,15 @@ extends Area2D
 
 signal hit
 
+# Durasi kebal sesaat setelah revive (detik)
+const REVIVE_INVULNERABLE_TIME = 3.0
+
 @export var speed = 400 # How fast the player will move (pixels/sec).
 var screen_size # Size of the game window.
+
+# Status kebal setelah revive
+var is_invulnerable = false
+var _invulnerable_tween: Tween
 
 # Kontrol sentuh relatif: karakter ikut bergerak sejauh jari digeser,
 # bukan berpindah ke posisi jari. Jadi jari bisa diletakkan di mana saja
@@ -79,6 +86,10 @@ func _unhandled_input(event):
 
 
 func start(pos):
+	if _invulnerable_tween:
+		_invulnerable_tween.kill()
+	is_invulnerable = false
+	$AnimatedSprite2D.modulate.a = 1.0
 	touch_pending = Vector2.ZERO
 	position = pos
 	rotation = 0
@@ -86,7 +97,35 @@ func start(pos):
 	$CollisionShape2D.disabled = false
 
 
+# Menghidupkan kembali pemain di posisi awal dengan kebal sementara
+func revive(pos):
+	touch_pending = Vector2.ZERO
+	position = pos
+	rotation = 0
+	show()
+	$CollisionShape2D.set_deferred(&"disabled", false)
+	_start_invulnerability(REVIVE_INVULNERABLE_TIME)
+
+
+func _start_invulnerability(duration):
+	is_invulnerable = true
+	if _invulnerable_tween:
+		_invulnerable_tween.kill()
+	_invulnerable_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	var step = 0.15
+	var count = int(duration / (step * 2))
+	for i in range(count):
+		_invulnerable_tween.tween_property($AnimatedSprite2D, "modulate:a", 0.25, step)
+		_invulnerable_tween.tween_property($AnimatedSprite2D, "modulate:a", 1.0, step)
+	_invulnerable_tween.tween_callback(func():
+		is_invulnerable = false
+		$AnimatedSprite2D.modulate.a = 1.0
+	)
+
+
 func _on_body_entered(_body):
+	if is_invulnerable:
+		return
 	hide() # Player disappears after being hit.
 	hit.emit()
 	# Must be deferred as we can't change physics properties on a physics callback.

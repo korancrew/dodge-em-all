@@ -10,6 +10,7 @@ action = &"start_game"
 events = [SubResource("InputEventAction_fopy7")]
 
 [node name="HUD" type="CanvasLayer" unique_id=126421993]
+process_mode = 3
 script = ExtResource("1")
 
 [node name="ScoreLabel" type="Label" parent="." unique_id=1314826100]
@@ -55,6 +56,7 @@ shortcut = SubResource("4")
 text = "Start"
 
 [node name="MessageTimer" type="Timer" parent="." unique_id=1675980570]
+process_mode = 1
 one_shot = true
 
 [node name="HighScoreLabel" type="Label" parent="." unique_id=1948366106]

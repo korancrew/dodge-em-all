@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://c5xk7q8l0e3r1"]
+
+[ext_resource type="Script" path="res://space_background.gd" id="1_bg"]
+
+[node name="SpaceBackground" type="CanvasLayer"]
+layer = -1
+script = ExtResource("1_bg")
