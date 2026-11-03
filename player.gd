@@ -1,4 +1,4 @@
-extends Area2D
+﻿extends Area2D
 
 signal hit
 
@@ -76,6 +76,10 @@ func _unhandled_input(event):
 	# hanya pergeseran jari (InputEventScreenDrag) yang dihitung.
 	if event is InputEventScreenDrag and event.index == 0 and visible:
 		touch_pending += event.relative * touch_sensitivity
+
+
+func reset_touch():
+	touch_pending = Vector2.ZERO
 
 
 func start(pos):

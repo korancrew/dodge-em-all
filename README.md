@@ -25,7 +25,7 @@ dengan 3 nyawa, sampai menyelesaikan wave 10. Dibangun dari demo resmi Godot
 | --- | --- | --- |
 | Bergerak | WASD, tombol panah, D-pad, stik kiri | Sentuh di mana saja lalu geser; karakter ikut sejauh jari bergeser |
 | Mulai | Enter, Spasi | Tap tombol Start |
-| Pause *(rencana)* | Esc | Tombol pause, tombol Back |
+| Pause | Esc, Start (gamepad) | Tombol pause, tombol Back |
 
 Di laptop, kontrol sentuh bisa dicoba dengan klik dan seret mouse.
 
@@ -35,13 +35,15 @@ Di laptop, kontrol sentuh bisa dicoba dengan klik dan seret mouse.
 | --- | --- | --- | --- |
 | – | Dasar dari demo Dodge the Creeps | – | Selesai |
 | – | Orientasi potret, layar penuh, kontrol sentuh | – | Selesai |
-| 1 | High score tersimpan | C | Belum |
-| 2 | Tombol pause | C | Belum |
+| 1 | High score tersimpan | C | Selesai |
+| 2 | Tombol pause | C | Selesai |
 | 3 | Nyawa (3) + item nyawa gratis | A | Belum |
-| 4 | Jenis musuh berbeda (min. 3 dari 5) | B | Belum |
+| 4 | Jenis musuh berbeda (min. 3 dari 5) | B | Selesai |
 | 5 | Wave dan sub-wave, 10 wave | B | Belum |
 | 6 | Simpan progress di akhir wave | A + C | Belum |
 | 7 | Menembak | A | Ditunda, kalau masih ada waktu |
+| 8 | Layar credit | C | Selesai |
+| 9 | Audio tambahan per wave | C | Selesai |
 
 Perbarui kolom Status setiap fitur masuk ke branch `master`.
 
@@ -122,9 +124,11 @@ dodge-em-all/
 ├── player.tscn / player.gd  # karakter pemain, kontrol keyboard dan sentuh
 ├── mob.tscn / mob.gd        # musuh dasar
 ├── hud.tscn / hud.gd        # skor, pesan, tombol
-├── enemies/                 # (rencana) jenis musuh tambahan
-├── ui/                      # (rencana) panel pause, akhir wave, konfirmasi
-├── art/, fonts/             # aset
+├── enemies/                 # jenis musuh tambahan
+├── credits.gd               # kartu credit dan logika tampilan/skip credit
+├── wave_audio.gd            # pengatur audio adaptif wave (pitch naik, WAVE_MUSIC, sfx)
+├── tools/                   # skrip pembantu (generator sfx sintetis)
+├── art/, fonts/             # aset visual dan audio (art/audio/)
 └── export/                  # hasil export (diabaikan Git)
 ```
 
@@ -147,3 +151,5 @@ dodge-em-all/
   - Ikon nyawa: [25x25 Hearts](https://opengameart.org/content/25x25-hearts) oleh Min
   - Pemain dan musuh: [Kenney Platformer Pack Redux](https://opengameart.org/content/platformer-pack-redux-360-assets)
     dan [Kenney Platformer Art: More Animations & Enemies](https://opengameart.org/content/platformer-art-more-animations-and-enemies)
+  - Musik latar "House In a Forest Loop" oleh [HorrorPen](https://opengameart.org/content/loop-house-in-a-forest) (CC-BY 3.0)
+  - Efek suara sintetis wave (`art/audio/*.wav`) dibuat dengan skrip generator Python `tools/generate_wave_sfx.py` (CC0 / Public Domain)
