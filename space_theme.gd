@@ -70,6 +70,18 @@ static func create_code_box_style() -> StyleBoxFlat:
 	return sb
 
 
+# Membuat StyleBoxFlat untuk chip pill kategori kuis
+static func create_chip_style(bg_col: Color) -> StyleBoxFlat:
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = bg_col
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 10.0
+	sb.content_margin_right = 10.0
+	sb.content_margin_top = 4.0
+	sb.content_margin_bottom = 4.0
+	return sb
+
+
 # Mengembalikan warna chip kategori kuis
 static func get_category_color(category: String) -> Color:
 	match category.to_lower():

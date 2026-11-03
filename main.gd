@@ -5,6 +5,7 @@ var score
 
 # Status jatah kuis hidup-lagi (hanya 1x per wave)
 var revive_used_this_wave = false
+var _is_processing_hit = false
 
 
 func _ready():
@@ -43,17 +44,24 @@ func _update_play_area():
 
 
 func _on_player_hit():
+	if _is_processing_hit:
+		return
+	_is_processing_hit = true
+
 	# Bila jatah hidup-lagi wave ini belum dipakai, buka modal kuis
 	if not revive_used_this_wave:
 		$HUD.show_revive_quiz($WaveManager.wave)
 	else:
-		# Jika jatah sudah terpakai di wave yang sama, langsung game over
+		# Jika jatah sudah terpakai di wave yang sama, hentikan timer dan game over
+		$MobTimer.stop()
+		$ScoreTimer.stop()
 		$HUD.show_message("Kesempatan wave ini\nsudah dipakai!")
 		await get_tree().create_timer(1.2).timeout
 		game_over()
 
 
 func _on_revive_passed():
+	_is_processing_hit = false
 	revive_used_this_wave = true
 	$HUD.update_revive_indicator(false)
 	get_tree().call_group(&"mobs", &"queue_free")
@@ -62,11 +70,13 @@ func _on_revive_passed():
 
 
 func _on_revive_failed():
+	_is_processing_hit = false
 	get_tree().paused = false
 	game_over()
 
 
 func game_over():
+	_is_processing_hit = false
 	$SpaceBackground.stop_events()
 	$SpaceBackground.reset_to_title_theme()
 	$WaveManager.stop()
@@ -83,6 +93,7 @@ func game_over():
 
 
 func new_game():
+	_is_processing_hit = false
 	$SpaceBackground.start_events()
 	$SpaceBackground.set_wave_theme(1)
 	$WaveManager.stop()
