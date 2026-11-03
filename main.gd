@@ -172,6 +172,8 @@ func _on_game_won():
 func _on_MobTimer_timeout():
 	# Membuat musuh sesuai variasi wave (Walker atau Swimmer)
 	var mob = $WaveManager.create_enemy()
+	if mob == null:
+		return  # layar sudah penuh, lewati giliran spawn ini
 
 	# Pilih titik acak di Path2D
 	var mob_spawn_location = get_node(^"MobPath/MobSpawnLocation")

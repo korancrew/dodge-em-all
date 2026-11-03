@@ -17,10 +17,22 @@ func _ready():
 	super()
 
 
-# Slime adalah makhluk "darat": tidak diputar, cukup dibalik kiri-kanan.
+# Slime diputar menghadap arah gerak, tapi tidak pernah terbalik (kaki di atas).
+# Sprite slime menghadap ke kiri. Untuk gerak ke kanan, sprite dibalik horizontal
+# lalu diputar sesuai sudut gerak; untuk gerak ke kiri, sprite tidak dibalik dan
+# diputar relatif terhadap arah kiri. flip_v sengaja tidak dipakai karena sprite
+# punya offset vertikal: dibalik vertikal akan menggeser badan slime menjauhi hitbox.
 func face_direction(velocity: Vector2):
-	if velocity.x != 0:
-		$AnimatedSprite2D.flip_h = velocity.x > 0
+	if velocity == Vector2.ZERO:
+		return
+	var sprite = $AnimatedSprite2D
+	sprite.flip_v = false
+	if velocity.x >= 0:
+		sprite.flip_h = true
+		sprite.rotation = velocity.angle()
+	else:
+		sprite.flip_h = false
+		sprite.rotation = velocity.angle() - PI
 
 
 func _physics_process(delta):

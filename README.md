@@ -39,7 +39,7 @@ Di laptop, kontrol sentuh bisa dicoba dengan klik dan seret mouse.
 | 2 | Tombol pause | C | Selesai |
 | 3 | Nyawa (3) + item nyawa gratis | A | Belum |
 | 4 | Jenis musuh berbeda (min. 3 dari 5) | B | Selesai |
-| 5 | Wave dan sub-wave, 10 wave | B | Belum |
+| 5 | Wave dan sub-wave, 10 wave | B | Selesai |
 | 6 | Simpan progress di akhir wave | A + C | Belum |
 | 7 | Menembak | A | Ditunda, kalau masih ada waktu |
 | 8 | Latar luar angkasa prosedural & tema visual | – | Selesai |
@@ -56,6 +56,10 @@ antaranya. Setiap wave makin cepat dan padat:
 
 - Interval spawn = max(0,2; 0,6 × 0,9^(wave−1)) detik
 - Kecepatan musuh = acak(150, 250) × (1 + 0,1 × (wave−1)) px/detik
+- Batas musuh di layar sekaligus = 5 + (wave−1); giliran spawn dilewati kalau sudah penuh
+
+Saat menguji dari editor (build debug), tekan **F2** untuk langsung menyelesaikan wave
+yang sedang berjalan.
 
 **Jenis musuh.**
 

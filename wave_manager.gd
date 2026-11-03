@@ -17,6 +17,12 @@ const SUBWAVE_DURATION = 20.0       # durasi aktif musuh muncul per sub-wave (de
 const SUBWAVE_REST_DURATION = 2.0  # jeda istirahat antar sub-wave (detik)
 const WAVE_TRANSITION_DELAY = 2.0  # jeda pengumuman wave baru / selesai (detik)
 
+# Batas musuh di layar sekaligus = MAX_MOBS_BASE + MAX_MOBS_PER_WAVE × (wave−1)
+# (wave 1: 5, wave 10: 14). Giliran spawn dilewati kalau layar sudah sepadat ini,
+# supaya wave tinggi (interval spawn ±0,23 dtk + Splitter yang pecah) tetap bisa dimainkan.
+const MAX_MOBS_BASE = 5
+const MAX_MOBS_PER_WAVE = 1
+
 # Scene musuh per jenis
 const ENEMY_SCENES = {
 	"walker": preload("res://enemies/walker.tscn"),
@@ -53,8 +59,10 @@ var _mix = {}  # komposisi sub-wave yang sedang berjalan
 var _rng = RandomNumberGenerator.new()  # seed acak otomatis saat dibuat
 
 
-func start_waves():
-	wave = 1
+# Memulai rangkaian wave dari `start_wave` (bawaan 1).
+# Nilai lain dipakai untuk melanjutkan dari simpanan progress atau untuk pengujian.
+func start_waves(start_wave = 1):
+	wave = clampi(start_wave, 1, MAX_WAVES)
 	subwave = 1
 	is_running = true
 	_prepare_wave()
@@ -108,6 +116,27 @@ func _on_timer_finished():
 				game_won.emit()
 
 
+func _finish_wave():
+	if _state == "subwave_active" or _state == "subwave_rest":
+		subwave_ended.emit(wave, subwave)
+	subwave = SUBWAVES_PER_WAVE
+	_state = "wave_cleared"
+	_timer = WAVE_TRANSITION_DELAY
+	wave_cleared.emit(wave)
+
+
+# Mode debug: F2 langsung menyelesaikan wave yang sedang berjalan (lompat ke wave berikutnya).
+# Hanya aktif di build debug (dijalankan dari editor atau APK debug), tidak di APK release.
+func _unhandled_input(event):
+	if not OS.is_debug_build() or not is_running:
+		return
+	if _state == "wave_cleared" or _state == "game_won":
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F2:
+		get_viewport().set_input_as_handled()
+		_finish_wave()
+
+
 func _start_subwave(sw):
 	subwave = sw
 	_mix = get_mix(wave, subwave)
@@ -157,8 +186,26 @@ func pick_kind(mix: Dictionary) -> String:
 	return kinds[_rng.rand_weighted(weights)]
 
 
-# Membuat instance musuh sesuai komposisi sub-wave yang sedang berjalan
+func get_max_mobs() -> int:
+	return MAX_MOBS_BASE + MAX_MOBS_PER_WAVE * (wave - 1)
+
+
+# Jumlah musuh di dalam layar (ditambah tepi 50 px untuk musuh yang baru muncul).
+# Slime kecil hasil pecahan Splitter ikut dihitung.
+func count_mobs_on_screen() -> int:
+	var area = get_viewport().get_visible_rect().grow(50)
+	var count = 0
+	for mob in get_tree().get_nodes_in_group(&"mobs"):
+		if area.has_point(mob.position):
+			count += 1
+	return count
+
+
+# Membuat instance musuh sesuai komposisi sub-wave yang sedang berjalan.
+# Mengembalikan null kalau layar sudah penuh (giliran spawn ini dilewati).
 func create_enemy() -> Mob:
+	if count_mobs_on_screen() >= get_max_mobs():
+		return null
 	if _mix.is_empty():
 		_mix = get_mix(wave, subwave)
 	return ENEMY_SCENES[pick_kind(_mix)].instantiate()
