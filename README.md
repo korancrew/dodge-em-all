@@ -42,6 +42,8 @@ Di laptop, kontrol sentuh bisa dicoba dengan klik dan seret mouse.
 | 5 | Wave dan sub-wave, 10 wave | B | Belum |
 | 6 | Simpan progress di akhir wave | A + C | Belum |
 | 7 | Menembak | A | Ditunda, kalau masih ada waktu |
+| 8 | Latar luar angkasa prosedural & tema visual | – | Selesai |
+| 9 | Kuis hidup-lagi (1x per wave) & dialog modal | – | Selesai |
 
 Perbarui kolom Status setiap fitur masuk ke branch `master`.
 
