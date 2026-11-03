@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://sgfduhhw4pno" path="res://art/House In a Forest Loop.ogg" id="5_55d8h"]
 [ext_resource type="AudioStream" uid="uid://td2mgko63p61" path="res://art/gameover.wav" id="6_hp1r0"]
 [ext_resource type="Script" path="res://wave_manager.gd" id="7_wave"]
+[ext_resource type="PackedScene" path="res://space_background.tscn" id="8_bg"]
 
 [sub_resource type="Curve2D" id="1"]
 _data = {
@@ -18,14 +19,7 @@ point_count = 5
 script = ExtResource("1_0r6n5")
 mob_scene = ExtResource("2_7mycd")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=569320965]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0.219608, 0.372549, 0.380392, 1)
+[node name="SpaceBackground" parent="." unique_id=569320965 instance=ExtResource("8_bg")]
 
 [node name="Player" parent="." unique_id=927660131 instance=ExtResource("3_veqnc")]
 
