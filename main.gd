@@ -3,6 +3,9 @@ extends Node
 @export var mob_scene: PackedScene
 var score
 
+# Status jatah kuis hidup-lagi (hanya 1x per wave)
+var revive_used_this_wave = false
+
 
 func _ready():
 	# Layar penuh: ukuran area permainan mengikuti layar perangkat (stretch aspect "expand"),
@@ -14,6 +17,8 @@ func _ready():
 	$WaveManager.subwave_ended.connect(_on_subwave_ended)
 	$WaveManager.wave_cleared.connect(_on_wave_cleared)
 	$WaveManager.game_won.connect(_on_game_won)
+	$HUD.revive_passed.connect(_on_revive_passed)
+	$HUD.revive_failed.connect(_on_revive_failed)
 
 
 func _update_play_area():
@@ -37,12 +42,37 @@ func _update_play_area():
 	$StartPosition.position = Vector2(left + area.size.x * 0.5, top_edge + area.size.y * 0.625)
 
 
+func _on_player_hit():
+	# Bila jatah hidup-lagi wave ini belum dipakai, buka modal kuis
+	if not revive_used_this_wave:
+		$HUD.show_revive_quiz($WaveManager.wave)
+	else:
+		# Jika jatah sudah terpakai di wave yang sama, langsung game over
+		$HUD.show_message("Kesempatan wave ini\nsudah dipakai!")
+		await get_tree().create_timer(1.2).timeout
+		game_over()
+
+
+func _on_revive_passed():
+	revive_used_this_wave = true
+	$HUD.update_revive_indicator(false)
+	get_tree().call_group(&"mobs", &"queue_free")
+	$Player.revive($StartPosition.position)
+	get_tree().paused = false
+
+
+func _on_revive_failed():
+	get_tree().paused = false
+	game_over()
+
+
 func game_over():
 	$SpaceBackground.stop_events()
 	$SpaceBackground.reset_to_title_theme()
 	$WaveManager.stop()
 	$ScoreTimer.stop()
 	$MobTimer.stop()
+	$HUD.update_revive_indicator(false)
 	var new_record = score > SaveManager.highest_score
 	if new_record:
 		SaveManager.save_high_score(score)
@@ -66,6 +96,9 @@ func new_game():
 
 
 func _on_wave_started(wave):
+	# Reset jatah kuis sekali per wave hanya di titik ini
+	revive_used_this_wave = false
+	$HUD.update_revive_indicator(true)
 	$SpaceBackground.set_wave_theme(wave)
 	$HUD.update_wave(wave, $WaveManager.max_wave)
 	$HUD.show_message("Wave %d" % wave)
@@ -96,6 +129,7 @@ func _on_game_won():
 	$WaveManager.stop()
 	$MobTimer.stop()
 	$ScoreTimer.stop()
+	$HUD.update_revive_indicator(false)
 	get_tree().call_group(&"mobs", &"queue_free")
 	var new_record = score > SaveManager.highest_score
 	if new_record:
