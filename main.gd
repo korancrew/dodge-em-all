@@ -38,6 +38,8 @@ func _update_play_area():
 
 
 func game_over():
+	$SpaceBackground.stop_events()
+	$SpaceBackground.reset_to_title_theme()
 	$WaveManager.stop()
 	$ScoreTimer.stop()
 	$MobTimer.stop()
@@ -51,6 +53,8 @@ func game_over():
 
 
 func new_game():
+	$SpaceBackground.start_events()
+	$SpaceBackground.set_wave_theme(1)
 	$WaveManager.stop()
 	get_tree().call_group(&"mobs", &"queue_free")
 	score = 0
@@ -62,6 +66,7 @@ func new_game():
 
 
 func _on_wave_started(wave):
+	$SpaceBackground.set_wave_theme(wave)
 	$HUD.update_wave(wave, $WaveManager.max_wave)
 	$HUD.show_message("Wave %d" % wave)
 
@@ -86,6 +91,8 @@ func _on_wave_cleared(wave):
 
 
 func _on_game_won():
+	$SpaceBackground.stop_events()
+	$SpaceBackground.reset_to_title_theme()
 	$WaveManager.stop()
 	$MobTimer.stop()
 	$ScoreTimer.stop()
