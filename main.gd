@@ -10,6 +10,13 @@ var _wave_audio
 var revive_used_this_wave = false
 var _is_processing_hit = false
 
+# Item nyawa (fitur 3): muncul acak setiap 10-20 detik, hanya kalau nyawa belum penuh.
+var life_pickup_scene = preload("res://life_pickup.tscn")
+const LIFE_SPAWN_MIN = 10.0
+const LIFE_SPAWN_MAX = 20.0
+const REVIVE_LIVES = 1  # jumlah nyawa setelah lolos kuis hidup-lagi
+var life_timer: Timer
+
 
 func _ready():
 	# Layar penuh: ukuran area permainan mengikuti layar perangkat (stretch aspect "expand"),
@@ -31,6 +38,15 @@ func _ready():
 	_wave_audio.name = "WaveAudio"
 	add_child(_wave_audio)
 	_wave_audio.setup($Music)
+
+	# Timer item nyawa dibuat lewat kode (sekali jalan, waktunya diacak tiap kali dimulai).
+	life_timer = Timer.new()
+	life_timer.one_shot = true
+	add_child(life_timer)
+	life_timer.timeout.connect(_on_LifeTimer_timeout)
+
+	# Jumlah nyawa Player ditampilkan oleh HUD.
+	$Player.lives_changed.connect(func(lives): $HUD.update_lives(lives, $Player.max_lives))
 
 
 func _update_play_area():
@@ -54,7 +70,9 @@ func _update_play_area():
 	$StartPosition.position = Vector2(left + area.size.x * 0.5, top_edge + area.size.y * 0.625)
 
 
-func _on_player_hit():
+# Nyawa terakhir habis (sinyal `died` dari Player). Selama nyawa masih ada,
+# Player sendiri yang mengurangi nyawa dan memberi masa kebal.
+func _on_player_died():
 	if _is_processing_hit:
 		return
 	_is_processing_hit = true
@@ -76,7 +94,7 @@ func _on_revive_passed():
 	revive_used_this_wave = true
 	$HUD.update_revive_indicator(false)
 	get_tree().call_group(&"mobs", &"queue_free")
-	$Player.revive($StartPosition.position)
+	$Player.revive($StartPosition.position, REVIVE_LIVES)
 	get_tree().paused = false
 
 
@@ -93,6 +111,7 @@ func game_over():
 	$WaveManager.stop()
 	$ScoreTimer.stop()
 	$MobTimer.stop()
+	_stop_life_pickups()
 	$HUD.update_revive_indicator(false)
 	_wave_audio.stop()
 	var new_record = score > SaveManager.highest_score
@@ -110,8 +129,10 @@ func new_game():
 	$SpaceBackground.set_wave_theme(1)
 	$WaveManager.stop()
 	get_tree().call_group(&"mobs", &"queue_free")
+	_stop_life_pickups()
 	score = 0
 	$Player.start($StartPosition.position)
+	_restart_life_timer()
 	$StartTimer.start()
 	$HUD.update_score(score)
 	$HUD.show_message("Get Ready")
@@ -156,6 +177,7 @@ func _on_game_won():
 	$WaveManager.stop()
 	$MobTimer.stop()
 	$ScoreTimer.stop()
+	_stop_life_pickups()
 	$HUD.update_revive_indicator(false)
 	_wave_audio.on_game_won()
 	get_tree().call_group(&"mobs", &"queue_free")
@@ -216,6 +238,7 @@ func _on_hud_quit_to_menu():
 	$ScoreTimer.stop()
 	$MobTimer.stop()
 	$StartTimer.stop()
+	_stop_life_pickups()
 	$HUD.update_revive_indicator(false)
 	$Music.stop()
 	_wave_audio.stop()
@@ -227,3 +250,38 @@ func _on_hud_quit_to_menu():
 		SaveManager.save_high_score(score)
 	$HUD.update_high_score(SaveManager.highest_score)
 	$HUD.show_title()
+
+
+# ---------------- Item nyawa ----------------
+
+func _restart_life_timer():
+	life_timer.start(randf_range(LIFE_SPAWN_MIN, LIFE_SPAWN_MAX))
+
+
+# Menghentikan timer item nyawa dan menghapus item yang masih ada di layar.
+func _stop_life_pickups():
+	life_timer.stop()
+	get_tree().call_group(&"life_pickup", &"queue_free")
+
+
+func _on_LifeTimer_timeout():
+	var player = $Player
+	var pickup_on_screen = not get_tree().get_nodes_in_group(&"life_pickup").is_empty()
+	if player.lives > 0 and player.lives < player.max_lives and not pickup_on_screen:
+		var pickup = life_pickup_scene.instantiate()
+		pickup.position = _random_pickup_position()
+		add_child(pickup)
+	_restart_life_timer()
+
+
+# Posisi acak yang aman: tidak terlalu dekat tepi layar (atas lebih lebar karena ada HUD)
+# dan minimal 120 px dari pemain, supaya pemain harus bergerak untuk mengambilnya.
+func _random_pickup_position():
+	var area = get_viewport().get_visible_rect()
+	var min_pos = area.position + Vector2(40, 120)
+	var max_pos = area.end - Vector2(40, 40)
+	for i in 20:
+		var pos = Vector2(randf_range(min_pos.x, max_pos.x), randf_range(min_pos.y, max_pos.y))
+		if pos.distance_to($Player.position) >= 120:
+			return pos
+	return area.get_center()

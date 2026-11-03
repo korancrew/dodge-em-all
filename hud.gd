@@ -15,6 +15,14 @@ const TITLE_TEXT = "Dodge 'em\nAll"
 var wave_label: Label
 var revive_star: TextureRect
 var quiz_panel: QuizPanel
+var lives_box: HBoxContainer
+
+# Ikon nyawa (fitur 3) diambil dari satu lembar gambar 50x125 berisi hati 25x25:
+# hati penuh di kiri atas, hati kosong di kiri bawah.
+const HEARTS_SHEET = preload("res://art/hearts/heartsupdated.png")
+const HEART_SIZE = 32
+var heart_full: AtlasTexture
+var heart_empty: AtlasTexture
 
 var playing = false
 var _message_was_visible = false
@@ -25,6 +33,7 @@ func _ready():
 	$MessageTimer.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_setup_wave_label()
 	_setup_revive_indicator()
+	_setup_lives_box()
 	_apply_space_theme()
 	_setup_quiz_panel()
 	# Saat game dibuka, tampilkan high score yang tersimpan di layar judul.
@@ -60,6 +69,39 @@ func _setup_revive_indicator():
 	revive_star.modulate = SpaceTheme.COLOR_GOLD
 	revive_star.hide()
 	add_child(revive_star)
+
+
+# Deretan hati di bawah label wave (kiri atas).
+func _setup_lives_box():
+	heart_full = _heart_from_sheet(Rect2(0, 0, 25, 25))
+	heart_empty = _heart_from_sheet(Rect2(0, 100, 25, 25))
+	lives_box = HBoxContainer.new()
+	lives_box.name = "LivesBox"
+	lives_box.offset_left = 20.0
+	lives_box.offset_top = 62.0
+	lives_box.add_theme_constant_override("separation", 6)
+	lives_box.hide()
+	add_child(lives_box)
+
+
+func _heart_from_sheet(region):
+	var atlas = AtlasTexture.new()
+	atlas.atlas = HEARTS_SHEET
+	atlas.region = region
+	return atlas
+
+
+# Menampilkan hati penuh sebanyak `lives` dan hati kosong untuk sisanya.
+func update_lives(lives, max_lives):
+	while lives_box.get_child_count() < max_lives:
+		var icon = TextureRect.new()
+		icon.custom_minimum_size = Vector2(HEART_SIZE, HEART_SIZE)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST  # pixel art tetap tajam
+		lives_box.add_child(icon)
+	for i in lives_box.get_child_count():
+		lives_box.get_child(i).texture = heart_full if i < lives else heart_empty
 
 
 func _setup_quiz_panel():
@@ -145,6 +187,7 @@ func show_message(text, duration = 1.0):
 
 func show_game_over(new_record = false):
 	update_wave(0)
+	lives_box.hide()
 	playing = false
 	$PauseButton.hide()
 	$PausePanel.hide()
@@ -156,6 +199,7 @@ func show_game_over(new_record = false):
 func show_title():
 	playing = false
 	update_wave(0)
+	lives_box.hide()
 	$PauseButton.hide()
 	$PausePanel.hide()
 	$CreditsPanel.hide()
@@ -183,6 +227,7 @@ func _on_StartButton_pressed():
 	$CreditsButton.hide()
 	$HighScoreLabel.hide()  # sembunyikan selama bermain supaya layar bersih
 	$PauseButton.show()
+	lives_box.show()
 	playing = true
 	start_game.emit()
 
