@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+const SpaceTheme = preload("res://space_theme.gd")
+
 signal start_game
 
 # Label indikator wave (dibuat via kode)
@@ -9,8 +11,51 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	$MessageTimer.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_setup_wave_label()
+	_apply_space_theme()
 	# Saat game dibuka, tampilkan high score yang tersimpan di layar judul.
 	update_high_score(SaveManager.highest_score)
+
+
+func _apply_space_theme():
+	# Styling ScoreLabel
+	$ScoreLabel.add_theme_color_override("font_color", SpaceTheme.COLOR_TEXT_PRIMARY)
+	$ScoreLabel.add_theme_color_override("font_outline_color", SpaceTheme.COLOR_TEXT_OUTLINE)
+	$ScoreLabel.add_theme_constant_override("outline_size", 4)
+	$ScoreLabel.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	$ScoreLabel.add_theme_constant_override("shadow_offset_y", 3)
+
+	# Styling MessageLabel (Emas ber-outline untuk judul / sorotan)
+	$MessageLabel.add_theme_color_override("font_color", SpaceTheme.COLOR_GOLD)
+	$MessageLabel.add_theme_color_override("font_outline_color", SpaceTheme.COLOR_TEXT_OUTLINE)
+	$MessageLabel.add_theme_constant_override("outline_size", 6)
+	$MessageLabel.add_theme_color_override("font_shadow_color", Color(0.3, 0.2, 0.0, 0.5))
+	$MessageLabel.add_theme_constant_override("shadow_offset_y", 4)
+
+	# Styling HighScoreLabel
+	$HighScoreLabel.add_theme_color_override("font_color", SpaceTheme.COLOR_TEXT_MUTED)
+	$HighScoreLabel.add_theme_color_override("font_outline_color", SpaceTheme.COLOR_TEXT_OUTLINE)
+	$HighScoreLabel.add_theme_constant_override("outline_size", 2)
+
+	# Styling WaveLabel
+	if wave_label:
+		wave_label.add_theme_color_override("font_color", SpaceTheme.COLOR_ACCENT_CYAN)
+		wave_label.add_theme_color_override("font_outline_color", SpaceTheme.COLOR_TEXT_OUTLINE)
+		wave_label.add_theme_constant_override("outline_size", 3)
+
+	# Styling StartButton (bergaya luar angkasa: gelap semi-transparan + border cyan neon)
+	var btn_normal = SpaceTheme.create_button_style(Color(0.08, 0.12, 0.22, 0.85), SpaceTheme.COLOR_ACCENT_CYAN, 14, 2)
+	var btn_hover = SpaceTheme.create_button_style(Color(0.12, 0.20, 0.35, 0.95), SpaceTheme.COLOR_ACCENT_CYAN, 14, 2)
+	var btn_pressed = SpaceTheme.create_button_style(Color(0.05, 0.35, 0.45, 0.98), SpaceTheme.COLOR_ACCENT_CYAN, 14, 3)
+
+	$StartButton.add_theme_stylebox_override("normal", btn_normal)
+	$StartButton.add_theme_stylebox_override("hover", btn_hover)
+	$StartButton.add_theme_stylebox_override("pressed", btn_pressed)
+	$StartButton.add_theme_stylebox_override("focus", btn_hover)
+	$StartButton.add_theme_color_override("font_color", SpaceTheme.COLOR_TEXT_PRIMARY)
+	$StartButton.add_theme_color_override("font_hover_color", SpaceTheme.COLOR_GOLD)
+	$StartButton.add_theme_color_override("font_pressed_color", SpaceTheme.COLOR_TEXT_PRIMARY)
+	$StartButton.add_theme_color_override("font_outline_color", SpaceTheme.COLOR_TEXT_OUTLINE)
+	$StartButton.add_theme_constant_override("outline_size", 3)
 
 
 func _setup_wave_label():
