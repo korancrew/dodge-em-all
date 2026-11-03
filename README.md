@@ -172,7 +172,7 @@ dodge-em-all/
 ├── space_theme.gd           # warna dan gaya UI tema luar angkasa
 ├── wave_audio.gd            # pengatur audio adaptif wave (pitch naik, WAVE_MUSIC, sfx)
 ├── validate_quiz.py         # skrip cek kunci jawaban bank soal
-├── tools/                   # skrip pembantu (generator sfx sintetis)
+├── tools/                   # skrip pembantu (generator sfx sintetis dan ikon nyawa)
 ├── art/, fonts/             # aset visual dan audio (art/audio/)
 └── export/                  # hasil export (diabaikan Git)
 ```
@@ -193,8 +193,8 @@ dodge-em-all/
 - Aset tambahan, semuanya berlisensi CC0:
   - Ikon pause, resume, keluar, simpan: [Kenney Game Icons](https://opengameart.org/content/game-icons)
   - Tombol dan panel menu: [Kenney UI Pack](https://kenney.nl/assets/ui-pack)
-  - Ikon nyawa: [25x25 Hearts](https://opengameart.org/content/25x25-hearts) oleh Min
   - Pemain dan musuh: [Kenney Platformer Pack Redux](https://opengameart.org/content/platformer-pack-redux-360-assets)
     dan [Kenney Platformer Art: More Animations & Enemies](https://opengameart.org/content/platformer-art-more-animations-and-enemies)
   - Musik latar "House In a Forest Loop" oleh [HorrorPen](https://opengameart.org/content/loop-house-in-a-forest) (CC-BY 3.0)
   - Efek suara sintetis wave (`art/audio/*.wav`) dibuat dengan skrip generator Python `tools/generate_wave_sfx.py` (CC0 / Public Domain)
+  - Ikon nyawa pixel-art (`art/hearts/heart_full.png`, `heart_empty.png`) dibuat dengan skrip generator Python `tools/generate_hearts.py` (CC0 / Public Domain)

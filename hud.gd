@@ -17,12 +17,10 @@ var revive_star: TextureRect
 var quiz_panel: QuizPanel
 var lives_box: HBoxContainer
 
-# Ikon nyawa (fitur 3) diambil dari satu lembar gambar 50x125 berisi hati 25x25:
-# hati penuh di kiri atas, hati kosong di kiri bawah.
-const HEARTS_SHEET = preload("res://art/hearts/heartsupdated.png")
+# Ikon nyawa (fitur 3): pixel-art 60x60 buatan tools/generate_hearts.py.
+const HEART_FULL = preload("res://art/hearts/heart_full.png")
+const HEART_EMPTY = preload("res://art/hearts/heart_empty.png")
 const HEART_SIZE = 32
-var heart_full: AtlasTexture
-var heart_empty: AtlasTexture
 
 var playing = false
 var _message_was_visible = false
@@ -73,8 +71,6 @@ func _setup_revive_indicator():
 
 # Deretan hati di bawah label wave (kiri atas).
 func _setup_lives_box():
-	heart_full = _heart_from_sheet(Rect2(0, 0, 25, 25))
-	heart_empty = _heart_from_sheet(Rect2(0, 100, 25, 25))
 	lives_box = HBoxContainer.new()
 	lives_box.name = "LivesBox"
 	lives_box.offset_left = 20.0
@@ -82,13 +78,6 @@ func _setup_lives_box():
 	lives_box.add_theme_constant_override("separation", 6)
 	lives_box.hide()
 	add_child(lives_box)
-
-
-func _heart_from_sheet(region):
-	var atlas = AtlasTexture.new()
-	atlas.atlas = HEARTS_SHEET
-	atlas.region = region
-	return atlas
 
 
 # Menampilkan hati penuh sebanyak `lives` dan hati kosong untuk sisanya.
@@ -101,7 +90,7 @@ func update_lives(lives, max_lives):
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST  # pixel art tetap tajam
 		lives_box.add_child(icon)
 	for i in lives_box.get_child_count():
-		lives_box.get_child(i).texture = heart_full if i < lives else heart_empty
+		lives_box.get_child(i).texture = HEART_FULL if i < lives else HEART_EMPTY
 
 
 func _setup_quiz_panel():

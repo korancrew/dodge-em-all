@@ -6,6 +6,11 @@ extends Area2D
 @export var blink_time = 2.0  # mulai berkedip di detik-detik terakhir
 
 var _age = 0.0
+var _base_scale = Vector2.ONE  # skala sprite dari scene, jadi dasar efek berdenyut
+
+
+func _ready():
+	_base_scale = $Sprite2D.scale
 
 
 func _process(delta):
@@ -17,7 +22,7 @@ func _process(delta):
 	# Berkedip sebagai tanda item akan hilang.
 	visible = time_left > blink_time or fmod(time_left, 0.25) > 0.125
 	# Efek "berdenyut" kecil supaya terlihat sebagai item yang bisa diambil.
-	$Sprite2D.scale = Vector2.ONE * 1.6 * (1.0 + 0.08 * sin(_age * 6.0))
+	$Sprite2D.scale = _base_scale * (1.0 + 0.08 * sin(_age * 6.0))
 
 
 func collect():
