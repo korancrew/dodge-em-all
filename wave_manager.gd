@@ -17,11 +17,22 @@ const SUBWAVE_DURATION = 20.0       # durasi aktif musuh muncul per sub-wave (de
 const SUBWAVE_REST_DURATION = 2.0  # jeda istirahat antar sub-wave (detik)
 const WAVE_TRANSITION_DELAY = 2.0  # jeda pengumuman wave baru / selesai (detik)
 
-# Batas musuh di layar sekaligus = MAX_MOBS_BASE + MAX_MOBS_PER_WAVE × (wave−1)
-# (wave 1: 5, wave 10: 14). Giliran spawn dilewati kalau layar sudah sepadat ini,
-# supaya wave tinggi (interval spawn ±0,23 dtk + Splitter yang pecah) tetap bisa dimainkan.
-const MAX_MOBS_BASE = 5
-const MAX_MOBS_PER_WAVE = 1
+# Rumus kesulitan (w = nomor wave, mulai 1):
+#   interval spawn = base_interval × interval_factor^(w-1) × pengali "interval" sub-wave
+#   kecepatan      = acak(speed_min, speed_max) × (1 + speed_step × (w-1))
+#   batas musuh    = max_mobs_base + max_mobs_per_wave × (w-1)   (musuh di layar sekaligus)
+# Wave 1: tiap 1,0 dtk, 150–250, maks 5 · wave 5: ±0,69 dtk, 180–300, maks 9
+# wave 10: ±0,43 dtk, 218–363, maks 14. Perkiraan simulasi: rata-rata ±3 musuh
+# di layar di wave 1, ±4 di wave 3, ±6 di wave 10. Giliran spawn dilewati kalau layar
+# sudah mencapai batas. Semua angka bisa diubah di Inspector untuk balancing.
+@export var base_interval = 1.0
+@export var interval_factor = 0.91
+@export var min_interval = 0.2       # batas bawah interval spawn (detik)
+@export var speed_min = 150.0
+@export var speed_max = 250.0
+@export var speed_step = 0.05
+@export var max_mobs_base = 5
+@export var max_mobs_per_wave = 1
 
 # Scene musuh per jenis
 const ENEMY_SCENES = {
@@ -145,16 +156,14 @@ func _start_subwave(sw):
 	subwave_started.emit(wave, subwave)
 
 
-# Interval spawn = max(0,2; 0,6 × 0,9^(wave−1)) detik, dikali pengali "interval" sub-wave (bila ada)
+# Interval spawn = base_interval × interval_factor^(wave−1), dikali pengali "interval" sub-wave (bila ada)
 func get_spawn_interval() -> float:
-	return max(0.2, 0.6 * pow(0.9, wave - 1) * _mix.get("interval", 1.0))
+	return max(min_interval, base_interval * pow(interval_factor, wave - 1) * _mix.get("interval", 1.0))
 
 
-# Kecepatan musuh = acak(150, 250) × (1 + 0,1 × (wave−1))
+# Kecepatan musuh = acak(speed_min, speed_max) × (1 + speed_step × (wave−1))
 func get_enemy_speed() -> float:
-	var base_speed = randf_range(150.0, 250.0)
-	var multiplier = 1.0 + 0.1 * (wave - 1)
-	return base_speed * multiplier
+	return _rng.randf_range(speed_min, speed_max) * (1.0 + speed_step * (wave - 1))
 
 
 func get_mix(w, s) -> Dictionary:
@@ -187,7 +196,7 @@ func pick_kind(mix: Dictionary) -> String:
 
 
 func get_max_mobs() -> int:
-	return MAX_MOBS_BASE + MAX_MOBS_PER_WAVE * (wave - 1)
+	return max_mobs_base + max_mobs_per_wave * (wave - 1)
 
 
 # Jumlah musuh di dalam layar (ditambah tepi 50 px untuk musuh yang baru muncul).

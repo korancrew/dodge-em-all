@@ -63,7 +63,7 @@ Perbarui kolom Status setiap fitur masuk ke branch `master`.
       tombol "Lanjutkan" dan "Main Baru" di layar judul, simpan dan hapus progress di `save_manager.gd`.
 - [ ] **HUD sub-wave** (C). Tampilkan "Wave n/10 · s/3" dan pesan "Sub-wave 2" / "Sub-wave 3".
 - [ ] **Balancing** (B). Mainkan sampai wave 10 di HP (gunakan F2 untuk melompati wave), lalu atur
-      `MAX_MOBS_*`, bobot di `WAVES`, dan kecepatan musuh di `wave_manager.gd`.
+      `max_mobs_*`, `base_interval`, `speed_*`, dan bobot di `WAVES` di `wave_manager.gd`.
 - [ ] **APK release, video demo, presentasi** (lihat Jadwal dan Pengumpulan).
 
 ## Aturan permainan
@@ -71,9 +71,14 @@ Perbarui kolom Status setiap fitur masuk ke branch `master`.
 **Wave.** Satu wave = 3 sub-wave masing-masing 20 detik, dengan jeda 2 detik di
 antaranya. Setiap wave makin cepat dan padat:
 
-- Interval spawn = max(0,2; 0,6 × 0,9^(wave−1)) detik
-- Kecepatan musuh = acak(150, 250) × (1 + 0,1 × (wave−1)) px/detik
+- Interval spawn = 1,0 × 0,91^(wave−1) detik (wave 1: 1,0 · wave 5: ±0,69 · wave 10: ±0,43)
+- Kecepatan musuh = acak(150, 250) × (1 + 0,05 × (wave−1)) px/detik (wave 10: 218–363)
 - Batas musuh di layar sekaligus = 5 + (wave−1); giliran spawn dilewati kalau sudah penuh
+- Per sub-wave: komposisi musuh berganti (lihat Jenis musuh); sub-wave 3 di wave 4
+  15% lebih padat (pengali interval 0,85)
+
+Rata-rata musuh di layar: ±3 di wave 1, ±4 di wave 3, ±6 di wave 10. Semua angka ada
+sebagai `@export` di `wave_manager.gd` dan bisa diubah di Inspector untuk balancing.
 
 Saat menguji dari editor (build debug), tekan **F2** untuk langsung menyelesaikan wave
 yang sedang berjalan.
