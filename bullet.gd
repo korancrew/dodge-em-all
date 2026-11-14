@@ -1,5 +1,5 @@
 extends Area2D
-# Peluru pemain (fitur 7). Ditembakkan otomatis oleh Player ke musuh terdekat,
+# Peluru pemain (fitur 7). Ditembakkan Player ke arah double tap saat karakter diam,
 # terbang lurus, lalu hilang saat mengenai musuh pertama atau setelah `lifetime` habis.
 # Peluru ada di collision layer 2 ("peluru") dan hanya memindai layer 1 (musuh),
 # jadi tidak terdeteksi oleh Player maupun item hati.
