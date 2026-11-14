@@ -19,6 +19,7 @@ var life_timer: Timer
 
 # Akhir wave: bonus skor 10 × nomor wave, lalu layar pilihan Lanjut / Simpan & Keluar / Keluar.
 const WAVE_BONUS_PER_WAVE = 10
+const KILL_SCORE = 1  # poin per musuh yang tertembak (fitur 7)
 var _last_bonus = 0
 var _start_wave = 1  # wave pertama ronde ini (1, atau wave dari simpanan saat "Lanjutkan")
 
@@ -56,6 +57,7 @@ func _ready():
 
 	# Jumlah nyawa Player ditampilkan oleh HUD.
 	$Player.lives_changed.connect(func(lives): $HUD.update_lives(lives, $Player.max_lives))
+	$Player.enemy_shot.connect(_on_enemy_shot)
 
 
 func _update_play_area():
@@ -102,7 +104,7 @@ func _on_revive_passed():
 	_is_processing_hit = false
 	revive_used_this_wave = true
 	$HUD.update_revive_indicator(false)
-	get_tree().call_group(&"mobs", &"queue_free")
+	_clear_mobs_and_bullets()
 	$Player.revive($StartPosition.position, REVIVE_LIVES)
 	get_tree().paused = false
 
@@ -141,7 +143,7 @@ func new_game(start_wave = 1, start_score = 0, start_lives = -1):
 	$SpaceBackground.start_events()
 	$SpaceBackground.set_wave_theme(start_wave)
 	$WaveManager.stop()
-	get_tree().call_group(&"mobs", &"queue_free")
+	_clear_mobs_and_bullets()
 	_stop_life_pickups()
 	score = start_score
 	$Player.start($StartPosition.position, start_lives)
@@ -184,7 +186,7 @@ func _on_subwave_ended(_wave, _subwave):
 
 func _on_wave_cleared(wave):
 	$MobTimer.stop()
-	get_tree().call_group(&"mobs", &"queue_free")
+	_clear_mobs_and_bullets()
 	_last_bonus = WAVE_BONUS_PER_WAVE * wave
 	score += _last_bonus
 	$HUD.update_score(score)
@@ -195,7 +197,7 @@ func _on_wave_cleared(wave):
 # Jeda akhir wave selesai (bukan wave terakhir): tampilkan layar pilihan.
 # HUD mem-pause game selama layar ini tampil.
 func _on_wave_break(wave):
-	get_tree().call_group(&"mobs", &"queue_free")  # wave berikutnya mulai dari layar bersih
+	_clear_mobs_and_bullets()  # wave berikutnya mulai dari layar bersih
 	get_tree().call_group(&"life_pickup", &"queue_free")
 	$HUD.show_wave_end(wave, $WaveManager.max_wave, score, _last_bonus, $Player.lives)
 
@@ -219,7 +221,7 @@ func _on_game_won():
 	_stop_life_pickups()
 	$HUD.update_revive_indicator(false)
 	_wave_audio.on_game_won()
-	get_tree().call_group(&"mobs", &"queue_free")
+	_clear_mobs_and_bullets()
 	SaveManager.clear_progress()
 	var new_record = score > SaveManager.highest_score
 	if new_record:
@@ -257,6 +259,16 @@ func _on_MobTimer_timeout():
 	add_child(mob)
 
 
+# Musuh tertembak (fitur 7): +1 poin, setara 1 detik bertahan. Sengaja kecil karena tujuan
+# menembak adalah mengurangi musuh agar bertahan lebih lama, bukan menumpuk skor.
+# Peluru yang masih terbang setelah game berakhir tidak menambah skor.
+func _on_enemy_shot():
+	if not $WaveManager.is_running or _is_processing_hit:
+		return
+	score += KILL_SCORE
+	$HUD.update_score(score)
+
+
 func _on_ScoreTimer_timeout():
 	score += 1
 	$HUD.update_score(score)
@@ -282,7 +294,7 @@ func _on_hud_quit_to_menu():
 	$HUD.update_revive_indicator(false)
 	$Music.stop()
 	_wave_audio.stop()
-	get_tree().call_group(&"mobs", &"queue_free")
+	_clear_mobs_and_bullets()
 	$Player.hide()
 	$Player.reset_touch()
 	var new_record = score > SaveManager.highest_score
@@ -290,6 +302,12 @@ func _on_hud_quit_to_menu():
 		SaveManager.save_high_score(score)
 	$HUD.update_high_score(SaveManager.highest_score)
 	$HUD.show_title()
+
+
+# Menghapus semua musuh dan peluru pemain (fitur 7) dari layar.
+func _clear_mobs_and_bullets():
+	get_tree().call_group(&"mobs", &"queue_free")
+	get_tree().call_group(&"bullets", &"queue_free")
 
 
 # ---------------- Item nyawa ----------------
